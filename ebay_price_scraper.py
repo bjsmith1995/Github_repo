@@ -29,7 +29,7 @@ def ebay_price_lookup(ebay_url):
 	return (ebay_List)
 
 #read excel file with list of SKU UPC's in column A of the Active Sheet
-excel_workbook = openpyxl.load_workbook('Mozenda.xlsx')
+excel_workbook = openpyxl.load_workbook('testtest.xlsx')
 excel_sheet = excel_workbook.active
 #Keywords should be placed in Column A
 url_list = excel_sheet['A']
@@ -38,12 +38,12 @@ excel_write_to_sheet = excel_workbook.create_sheet("Price_Sheet", 0)
 
 for current_col in range(len(url_list)):
 	#call download function and store the price for current skus in a list, checking to see if the cell is blank
-	if url_list[current_col] != None
-		current_sku_price = ebay_price_lookup(url_list[current_col].value)
-	else:
-		current_sku_price = 'error in url'
 	#insert the sku back in front of the prices to see which prices go to which skus
-	current_sku_price.insert(0, url_list[current_col].value)
+	if url_list[current_col].value is not None:
+		current_sku_price = ebay_price_lookup(url_list[current_col].value)
+		current_sku_price.insert(0, url_list[current_col].value)
+	else:
+		current_sku_price = ['error in url']
 	#write current row to excel sheet
 	excel_write_to_sheet.append(current_sku_price)
 	#delay for random interval (.5 to 2 seconds) to simulate human clicking
