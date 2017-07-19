@@ -19,7 +19,6 @@ def ebay_price_lookup(ebay_url):
 	#&_sop=15   price + shipping: set as priority
 	ebay_url_prepend = 'https://www.ebay.com/sch/i.html?LH_BIN=1&LH_FS=1&_sop=15&_nkw='
 	#pulls the html page using the url prepend and passed keywords
-	r = requests.get(str(ebay_url_prepend + str(ebay_url))
 	r = requests.get(ebay_url_prepend + str(ebay_url))
 	ebay_page_soup = BeautifulSoup(r.text, 'html.parser')
 	#search for all bold tags (only price has a span w/ class "bold")
