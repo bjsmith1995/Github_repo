@@ -18,7 +18,7 @@ url_path = 'C:/Users/bjsmith/Desktop/trash delete later/testtest image comments_
 def sku_find_and_rename(i):
 	#this will be a function that is called for each number of anchors
 	current_anchor = '_anchor_'+i
-	anchor_lookup = soup.find('span', id='current_anchor')
+	anchor_lookup = soup.find('span', id=current_anchor)
 	current_sku = anchor_lookup.parent.parent.previous.previous
 	#!!!!!need to figure out what to do with leading zeros
 	#remove the leading zero once you have figured it out
