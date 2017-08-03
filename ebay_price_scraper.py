@@ -40,40 +40,44 @@ excel_sheet = excel_workbook.active
 
 #Keywords (UPCs) should be placed in Column A; current prices in Column B; 
 #the following will pull the data from excel and query ebay for the provided UPCs
-price_lookup=[]
-excel_columns = tuple(excel_sheet.columns)
-for i in range(len(excel_columns[0])):
-    time.sleep(random.randit(5,20)/10)
-    if excel_columns[0][i].value is not None:
-        price_lookup.append(ebay_price_lookup(excel_columns[0][i].value))
-    else:
-        price_lookup.append(['error in url'])
-
 #need to calculate dimensional weight from dimensions
 #lookup shipping price by dim_weight
 #do some calculations to figure out a zone where we still make x amount of profit
 #profit should be different based on the cost of the item (eg make more money on running boards than ventvisors)
-ship_cost = []
-purchase_cost = []
+
+price_lookup=[]
+excel_columns = tuple(excel_sheet.columns)
 
 for i in range(len(excel_columns[0])):
+    time.sleep(random.randit(5,20)/10)
+    previous_list_price = excel_columns['previous list price column number'][i].value
+    if excel_columns[0][i].value is not None:
+        ebay_list = ebay_price_lookup(excel_columns[0][i].value)
+        try:
+            ebay_list.remove(previous_list_price)
+            #handle error if the item has QTY=0 and isn't active on ebay
+        except ValueError:
+            pass
+    else:
+        ebay_list(['error in url'])
     dimensions = sorted([excel_columns[3][i].value, excel_columns[4][i].value, excel_columns[5][i].value])
     package_weight = excel_columns[6][i].value
     package_volume = dimensions[0]*dimensions[1]*dimensions[2]
-    
-    if package_volume >= 1728:
+    #need to make sure that there is a dimension for every part (no zeros allowed)
+    if package_volume <= 1728:
         dimensional_weight_denomenator = 166
     else:
         dimensional_weight_denomenator = 139
     dimensional_weight = package_volume/dimensional_weight_denomenator
     large_package_check = 2*dimensions[0]+2*dimensions[1]*2 + dimensions[2]
-    if large_package_check > dimensional_weight:
+    if large_package_check > 130 & dimensional_weight < 90:
         dimensional_weight = 90
     billable_weight = max(dimensional_weight, package_weight)
-    ship_cost.append(ship_cost_dictionary[billable_weight ])
-    purchase_cost.append(excel_columns[2][i].value)
+    ship_cost = ship_cost_dictionary[billable_weight]
+    purchase_cost = excel_columns[2][i].value
     
- 
+
+
 #this is the old lookup function
 #it was changed becauase of requiring additional excel columns
 """
