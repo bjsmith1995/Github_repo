@@ -53,25 +53,27 @@ for i in range(len(excel_columns[0])):
 #lookup shipping price by dim_weight
 #do some calculations to figure out a zone where we still make x amount of profit
 #profit should be different based on the cost of the item (eg make more money on running boards than ventvisors)
+ship_cost = []
+purchase_cost = []
 
 for i in range(len(excel_columns[0])):
     dimensions = sorted([excel_columns[3][i].value, excel_columns[4][i].value, excel_columns[5][i].value])
-    product_weight = excel_columns[6][i].value
-    product_cost = excel_columns[2][i].value
+    package_weight = excel_columns[6][i].value
     package_volume = dimensions[0]*dimensions[1]*dimensions[2]
+    
     if package_volume >= 1728:
         dimensional_weight_denomenator = 166
     else:
         dimensional_weight_denomenator = 139
     dimensional_weight = package_volume/dimensional_weight_denomenator
-    
     large_package_check = 2*dimensions[0]+2*dimensions[1]*2 + dimensions[2]
     if large_package_check > dimensional_weight:
         dimensional_weight = 90
-    billable_weight = max(dimensional_weight, product_weight)
-    ship_cost = ship_cost_dictionary[billable_weight]
+    billable_weight = max(dimensional_weight, package_weight)
+    ship_cost.append(ship_cost_dictionary[billable_weight ])
+    purchase_cost.append(excel_columns[2][i].value)
     
-
+ 
 #this is the old lookup function
 #it was changed becauase of requiring additional excel columns
 """
