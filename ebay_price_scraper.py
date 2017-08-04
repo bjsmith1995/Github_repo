@@ -45,7 +45,8 @@ excel_sheet = excel_workbook.active
 #do some calculations to figure out a zone where we still make x amount of profit
 #profit should be different based on the cost of the item (eg make more money on running boards than ventvisors)
 
-price_lookup=[]
+price_lookup=['Ebay_List_Price']
+profit_list = ['Expected Profit']
 excel_columns = tuple(excel_sheet.columns)
 
 for i in range(len(excel_columns[0])):
@@ -75,8 +76,29 @@ for i in range(len(excel_columns[0])):
     billable_weight = max(dimensional_weight, package_weight)
     ship_cost = ship_cost_dictionary[billable_weight]
     purchase_cost = excel_columns[2][i].value
-    
+    #see https://en.wikipedia.org/wiki/Average  (specifically weighted mean)
+    try:
+        our_new_list_price = (.25*ebay_list[0]+.65*ebay_list[1]+.1*ebay_list[2])
+    except IndexError:
+        try:
+            our_new_list_price = (.3*ebay_list[0]+.7*ebay_list[1])
+        except IndexError:
+            try:
+                our_new_list_price = ebay_list[0]-.05
+            except IndexError:
+                our_new_list_price = 'no data pulled'
+    expected_profit = .9*our_new_list_price-purchase_cost-ship_cost
+    #please replace:
+    #A with column that contains list price
+    #B with column that contains cost
+    #can probably remove the cost lookup from python no need for it
+    expected_profit = "=.9*A"+str(i)+"-B"+str(i)+"-"+str(ship_cost)
+    #make sure i can call a cell reference and store in with openpyxl
+    #i think i should be able too though
+    price_lookup.append(our_new_list_price)
+    profit_list.append(expected_profit)
 
+#need to resave price_lookup&profit_list in the correct column in the ws
 
 #this is the old lookup function
 #it was changed becauase of requiring additional excel columns
