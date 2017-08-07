@@ -33,16 +33,14 @@ def ebay_price_lookup(ebay_url):
 	price_list = ebay_page_soup.find_all('span', class_= 'bold')
 	for i in price_list:
 		#replace filler html
-		ebay_competitor_pricing.append(i.text.replace('\n', '').replace('\t', ''))
+		ebay_competitor_pricing.append(float(i.text.replace('\n', '').replace('\t', '').replace('$', '')))
 	return (ebay_competitor_pricing)
 
-#read excel file with list of SKU UPC's in column A of the Active Sheet
-#Keywords (UPCs) should be placed in Column A; current prices in Column B; '''asdfasdfasdfsfdsf'''  <<<<<need to setup the excel sheet
+#read excel file with list of SKU UPC's in column A of the Active Sheet. Please keep excel columns as is
 #the following will pull the data from excel and query ebay for the provided UPCs
 
 excel_workbook = openpyxl.load_workbook('testtest.xlsx')
 excel_sheet = excel_workbook.active
-
 excel_columns = tuple(excel_sheet.columns)
 
 UPC_list = excel_sheet['B']
@@ -57,6 +55,7 @@ price_lookup=['List_Price']
 profit_list = ['Expected Profit']
 
 for i in range(1, len(UPC_list)):
+    price_has_been_removed = False
     time.sleep(random.randint(5,20)/10)
     previous_list_price = List_Price[i].value
     if UPC_list[i].value is not None:
@@ -64,7 +63,8 @@ for i in range(1, len(UPC_list)):
         try:
             ebay_competitor_pricing.remove(previous_list_price)
             #handle error if the item has QTY=0 and isn't active on ebay
-        except ValueError:
+            price_has_been_removed = True
+        except:
             pass
     else:
         ebay_competitor_pricing(['error in url'])
@@ -86,24 +86,36 @@ for i in range(1, len(UPC_list)):
     #used a weighted mean to calculate list price
     try:
         our_new_list_price = (.25*ebay_competitor_pricing[0]+.65*ebay_competitor_pricing[1]+.1*ebay_competitor_pricing[2])
+        notes = '3+ listings found (excluding us). Price set to .25*First + .65*Second +.1*Third'
     except IndexError:
         try:
             our_new_list_price = (.3*ebay_competitor_pricing[0]+.7*ebay_competitor_pricing[1])
+            notes = '2 listings found (excluding us). Price set to .3*First + .7*Second'
         except IndexError:
-            try:
-                our_new_list_price = ebay_competitor_pricing[0]-.05
-            except IndexError:
-                our_new_list_price = 'no data pulled'
+            if price_has_been_removed == True:
+                try:
+                    our_new_list_price = ebay_competitor_pricing[0]-.05
+                    notes = 'One listing found (excluding us). Price set too .05$ less than them'
+                except IndexError:
+                    our_new_list_price = previous_list_price*1.1
+                    notes = 'We are the only lister. Price raised 10%'
+            else:
+                our_new_list_price = '=#N/A'
+                notes = 'no data pulled'
     #C: column that contains list price
     #E: column that contains cost
     #can probably remove the cost lookup from python no need for it
-    expected_profit = "=.9*C"+str(i)+"-E"+str(i)+"-"+str(ship_cost)
+    if type(our_new_list_price) == float:
+        our_new_list_price = round(our_new_list_price, 2)
+    expected_profit = "=.9*C"+str(i+1)+"-E"+str(i+1)+"-"+str(ship_cost)
     #make sure i can call a cell reference and store in with openpyxl
     #i think i should be able too though
-    excel_sheet.cell(column=3, row=i).value = our_new_list_price
-    excel_sheet.cell(column=4, row=i).value = expected_profit
+    excel_sheet.cell(column=3, row=i+1).value = our_new_list_price
+    excel_sheet.cell(column=4, row=i+1).value = expected_profit
+    excel_sheet.cell(column=10, row=i+1).value = notes
 
 excel_workbook.save(filename='testtestresults.xlsx')
+
 #this is the old lookup function
 #it was changed becauase of requiring additional excel columns
 """
