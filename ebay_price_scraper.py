@@ -58,6 +58,7 @@ for i in range(1, len(UPC_list)):
     price_has_been_removed = False
     time.sleep(random.randint(5,20)/10)
     previous_list_price = List_Price[i].value
+    #need to handle the case where a cell is blank (causes error when performing math on ebay_competitor_pricing)
     if UPC_list[i].value is not None:
         ebay_competitor_pricing = ebay_price_lookup(UPC_list[i].value)
         try:
@@ -78,7 +79,7 @@ for i in range(1, len(UPC_list)):
         dimensional_weight_denomenator = 139
     dimensional_weight = round(package_volume/dimensional_weight_denomenator)
     large_package_check = 2*dimensions[0]+2*dimensions[1]*2 + dimensions[2]
-    if large_package_check > 130 & dimensional_weight < 90:
+    if large_package_check > 130 and dimensional_weight < 90:
         dimensional_weight = 90
     billable_weight = round(max(dimensional_weight, Weight_list[i].value))
     ship_cost = ship_price_dictionary[billable_weight]
@@ -92,24 +93,20 @@ for i in range(1, len(UPC_list)):
             our_new_list_price = (.3*ebay_competitor_pricing[0]+.7*ebay_competitor_pricing[1])
             notes = '2 listings found (excluding us). Price set to .3*First + .7*Second'
         except IndexError:
-            if price_has_been_removed == True:
-                try:
-                    our_new_list_price = ebay_competitor_pricing[0]-.05
-                    notes = 'One listing found (excluding us). Price set too .05$ less than them'
-                except IndexError:
+            try:
+                our_new_list_price = ebay_competitor_pricing[0]-.05
+                notes = 'One listing found (excluding us). Price set too .05$ less than them'
+            except IndexError:
+                if price_has_been_removed ==True:
                     our_new_list_price = previous_list_price*1.1
                     notes = 'We are the only lister. Price raised 10%'
-            else:
-                our_new_list_price = '=#N/A'
-                notes = 'no data pulled'
-    #C: column that contains list price
-    #E: column that contains cost
+                else:
+                    our_new_list_price = '=#N/A'
+                    notes = 'no data pulled'
     #can probably remove the cost lookup from python no need for it
     if type(our_new_list_price) == float:
         our_new_list_price = round(our_new_list_price, 2)
     expected_profit = "=.9*C"+str(i+1)+"-E"+str(i+1)+"-"+str(ship_cost)
-    #make sure i can call a cell reference and store in with openpyxl
-    #i think i should be able too though
     excel_sheet.cell(column=3, row=i+1).value = our_new_list_price
     excel_sheet.cell(column=4, row=i+1).value = expected_profit
     excel_sheet.cell(column=10, row=i+1).value = notes
