@@ -56,19 +56,9 @@ profit_list = ['Expected Profit']
 
 for i in range(1, len(UPC_list)):
     price_has_been_removed = False
+    competitor_below_breakeven = False
     time.sleep(random.randint(5,20)/10)
     previous_list_price = List_Price[i].value
-    #need to handle the case where a cell is blank (causes error when performing math on ebay_competitor_pricing)
-    if UPC_list[i].value is not None:
-        ebay_competitor_pricing = ebay_price_lookup(UPC_list[i].value)
-        try:
-            ebay_competitor_pricing.remove(previous_list_price)
-            #handle error if the item has QTY=0 and isn't active on ebay
-            price_has_been_removed = True
-        except:
-            pass
-    else:
-        ebay_competitor_pricing(['error in url'])
     dimensions = sorted([Dimension1_list[i].value, Dimension2_list[i].value, Dimension3_list[i].value])
     package_volume = dimensions[0]*dimensions[1]*dimensions[2]
     #need to make sure that there is a dimension for every part (no zeros allowed)
@@ -83,11 +73,31 @@ for i in range(1, len(UPC_list)):
         dimensional_weight = 90
     billable_weight = round(max(dimensional_weight, Weight_list[i].value))
     ship_cost = ship_price_dictionary[billable_weight]
-    purchase_cost = Cost_list[i].value
+    cost_of_goods = Cost_list[i].value
+    estimated_break_even_price = (cost_of_goods+ship_cost)/.9
+    #need to handle the case where a cell is blank (causes error when performing math on ebay_competitor_pricing)
+    if UPC_list[i].value is not None:
+        ebay_competitor_pricing = ebay_price_lookup(UPC_list[i].value)
+        try:
+            while ebay_competitor_pricing[0] < estimated_break_even_price:
+                del ebay_competitor_pricing[0]
+        except:
+            competitor_below_breakeven = True
+        try:
+            ebay_competitor_pricing.remove(previous_list_price)
+            #handle error if the item has QTY=0 and isn't active on ebay
+            price_has_been_removed = True
+        except:
+            pass
+    else:
+        ebay_competitor_pricing(['error in url'])
     #used a weighted mean to calculate list price
     try:
         our_new_list_price = (.25*ebay_competitor_pricing[0]+.65*ebay_competitor_pricing[1]+.1*ebay_competitor_pricing[2])
         notes = '3+ listings found (excluding us). Price set to .25*First + .65*Second +.1*Third'
+    except TypeError:
+        our_new_list_price = estimated_break_even_price*1.1
+        notes = 'all competitor pricing below breakeven. Price set at Breakeven times 10%'
     except IndexError:
         try:
             our_new_list_price = (.3*ebay_competitor_pricing[0]+.7*ebay_competitor_pricing[1])
@@ -97,12 +107,15 @@ for i in range(1, len(UPC_list)):
                 our_new_list_price = ebay_competitor_pricing[0]-.05
                 notes = 'One listing found (excluding us). Price set too .05$ less than them'
             except IndexError:
-                if price_has_been_removed ==True:
+                if competitor_below_breakeven == False and price_has_been_removed == False:
+                    our_new_list_price = '=#N/A'
+                    notes = 'no data pulled'
+                elif competitor_below_breakeven == False and price_has_been_removed == True:
                     our_new_list_price = previous_list_price*1.1
                     notes = 'We are the only lister. Price raised 10%'
                 else:
-                    our_new_list_price = '=#N/A'
-                    notes = 'no data pulled'
+                    our_new_list_price = estimated_break_even_price*1.1
+                    notes = 'All competitors are below breakeven. Price set at 110% of breakeven'
     #can probably remove the cost lookup from python no need for it
     if type(our_new_list_price) == float:
         our_new_list_price = round(our_new_list_price, 2)
@@ -112,27 +125,3 @@ for i in range(1, len(UPC_list)):
     excel_sheet.cell(column=10, row=i+1).value = notes
 
 excel_workbook.save(filename='testtestresults.xlsx')
-
-#this is the old lookup function
-#it was changed becauase of requiring additional excel columns
-"""
-url_list = excel_sheet['A']
-#pricing will be saved to a new sheet titled: Price Sheet
-excel_write_to_sheet = excel_workbook.create_sheet("Price_Sheet", 0)
-
-for current_col in range(len(url_list)):
-	#call download function and store the price for current skus in a list, checking to see if the cell is blank
-	#insert the sku back in front of the prices to see which prices go to which skus
-	if url_list[current_col].value is not None:
-		current_sku_price = ebay_price_lookup(url_list[current_col].value)
-		current_sku_price.insert(0, url_list[current_col].value)
-	else:
-		current_sku_price = ['error in url']
-	#write current row to excel sheet
-	excel_write_to_sheet.append(current_sku_price)
-	#delay for random interval (.5 to 2 seconds) to simulate human clicking
-	time.sleep(random.randint(5,20)/10)
-
-#save to new workbook titled 'filename'
-excel_workbook.save(filename='scrapetest.xlsx')
-"""
