@@ -12,16 +12,18 @@ def pointer_right():
 def pointer_left():
     print("left")
 
-def cell_increment():
-    print("increment")
-
-   #how do i want to handle cell overflow?
-   #should a cell that overflow go into the next cell?
-   #i think that it should to better represent how binary works (so the computer can understand)
-   #however it would be much easier to just reset at 255
+def cell_increment(i):
+    tape_array[i]+=1
+    if tape_array[i] == 256:
+        tape_array[i] = 0
+#how do i want to handle cell overflow?
+#should a cell that overflow go into the next cell?
+#i think that it should to better represent how binary works (so the computer can understand)
+#however it would be much easier to just reset at 255
 
 def cell_decrement():
     print("decrement")
+
     #if i do handle overflow then should underflow be handled too?
     #eg cell_decrement.bf_tape_array[0]
     #where bf_tape_array[0]=0
@@ -35,7 +37,6 @@ def print_byte():
 def read_byte():
     print("read")
 
-
 fndict = {
 	"[":start_loop,
 	"]":close_loop,
@@ -48,15 +49,12 @@ fndict = {
 }
 
 def fndict_caller(passed_instruction, tape_array):
-	fndict[passed_instruction](tape_array)
+	fndict[passed_instruction](tape_array[i])
 	#how will the function handle changing the bf_tape_array location
 	#have to return its ending location and value
 	#need to recieve the tape_array at each subfunction
 
-
 tape_array = [0,0,0,0,]
-
-
 
 #how do i want to store the tape array?
 #could just make a list of really long length

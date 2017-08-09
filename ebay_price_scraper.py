@@ -50,9 +50,15 @@ Weight_list = excel_sheet['F']
 Dimension1_list = excel_sheet['G']
 Dimension2_list = excel_sheet['H']
 Dimension3_list = excel_sheet['I']
-
 price_lookup=['List_Price']
 profit_list = ['Expected Profit']
+
+backup_price_wb = openpyxl.Workbook()
+backup_price_ws = backup_price_wb.active
+backup_price_ws.cell(column=1, row=1).value = 'UPC'
+backup_price_ws.cell(column=2, row=1).value = 'Low Price 1'
+backup_price_ws.cell(column=3, row=1).value = 'Low Price 2'
+backup_price_ws.cell(column=4, row=1).value = 'Low Price 3... etc'
 
 for i in range(1, len(UPC_list)):
     price_has_been_removed = False
@@ -123,5 +129,9 @@ for i in range(1, len(UPC_list)):
     excel_sheet.cell(column=3, row=i+1).value = our_new_list_price
     excel_sheet.cell(column=4, row=i+1).value = expected_profit
     excel_sheet.cell(column=10, row=i+1).value = notes
+    backup_price_ws.cell(column=1, row=i+1).value = UPC_list[i].value
+    for j in range(len(ebay_competitor_pricing)):
+        backup_price_ws.cell(column=j+2, row=i+1).value = ebay_competitor_pricing[j]
 
+backup_price_wb.save(filename='testtestprices.xlsx')
 excel_workbook.save(filename='testtestresults.xlsx')
